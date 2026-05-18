@@ -138,13 +138,28 @@
             touch-action: manipulation; 
         }
 
-        /* --- PENYESUAIAN TOMBOL PAUSE UNTUK HP --- */
+        /* --- STYLING BARU UNTUK ICON PAUSE --- */
         #pause-btn {
-            padding: 12px 18px; /* Sedikit lebih besar agar mudah ditekan jempol */
-            font-size: 10px;
+            width: 44px; /* Dibuat kotak */
+            height: 44px;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             pointer-events: auto;
             user-select: none;
             -webkit-user-select: none;
+        }
+
+        /* Membuat icon 2 garis vertikal murni dengan CSS */
+        #pause-btn::after {
+            content: '';
+            display: block;
+            width: 16px;
+            height: 18px;
+            border-left: 5px solid #373737;
+            border-right: 5px solid #373737;
+            box-sizing: border-box;
         }
 
     </style>
@@ -162,7 +177,7 @@
                 <div class="icon-level"></div>
                 <span>LEVEL:<span id="levelVal">1</span></span>
             </div>
-            <button id="pause-btn">|| PAUSE</button>
+            <button id="pause-btn" aria-label="Pause Game"></button>
         </div>
     </div>
 
@@ -302,7 +317,6 @@
         togglePause();
     }, { passive: false });
 
-    // --- OBJEK PLAYER DENGAN LOGIKA ANIMASI DINAMIS ---
     const player = {
         x: 100, y: 0, width: 36, height: 76, vy: 0,
         gravity: 0.8, jumpPower: -16, isGrounded: false,
