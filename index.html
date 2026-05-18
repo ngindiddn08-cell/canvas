@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Run - Steve Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        body {   
+            margin: 0;
+            padding: 0;
+            background-color: #2c3e50;
+            color: #ffffff;
+            font-family: 'Press Start 2P', cursive;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            border: 8px solid #3d3d3d;
+            overflow: hidden;
+            background-color: #a5d6a7; 
+        }
+
+        canvas { display: block; }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            text-align: center;
+        }
+
+        .screen h1 {
+            color: #ffffff;
+            font-size: 32px;
+            margin-bottom: 30px;
+            text-shadow: 4px 4px #3d3d3d;
+            letter-spacing: 2px;
+        }
+
+        .control-info {
+            background: #c6c6c6;
+            color: #373737;
+            padding: 20px;
+            border: 4px solid #000;
+            box-shadow: inset -4px -4px #555, inset 4px 4px #fff;
+            margin-bottom: 30px;
+            font-size: 11px;
+            max-width: 80%;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            background-color: #c6c6c6;
+            color: #373737;
+            border: 4px solid #000;
+            box-shadow: inset -4px -4px #555, inset 4px 4px #fff;
+            cursor: pointer;
+        }
+
+        button:hover { background-color: #dcdcdc; }
+        button:active { box-shadow: inset 4px 4px #555, inset -4px -4px #fff; }
+
+        #ui-layer {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            right: 25px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 5;
+            display: none;
+            pointer-events: none;
+        }
+
+        .stat-box {
+            background-color: #c6c6c6;
+            border: 4px solid #000;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: inset -4px -4px #555, inset 4px 4px #fff;
+            color: #373737;
+            font-size: 12px;
+        }
+
+        .icon-coin {
+            width: 16px;
+            height: 16px;
+            background: #f1c40f;
+            border: 2px solid #b8860b;
+            box-shadow: 2px 2px #000;
+        }
+
+        .icon-level {
+            width: 16px;
+            height: 16px;
+            background: #2ecc71;
+            border: 2px solid #27ae60;
+            box-shadow: 2px 2px #000;
+            border-radius: 50%; 
+        }
+
+        #scoreVal, #levelVal {
+            text-shadow: 2px 2px #fff;
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="ui-layer">
+        <div class="stat-box">
+            <div class="icon-coin"></div>
+            <span>KOIN:<span id="scoreVal">0</span></span>
+        </div>
+        <div class="stat-box">
+            <div class="icon-level"></div>
+            <span>LEVEL:<span id="levelVal">1</span></span>
+        </div>
+    </div>
+
+    <div id="start-screen" class="screen">
+        <h1 style="color: #55FF55; text-shadow: 4px 4px #00AA00;">STEVE RUN</h1>
+        <div class="control-info">
+            <p>🌲 MISI: Kumpulkan Koin!</p>
+            <p>Hati-hati dengan rintangan blok.</p>
+            <br>
+            <p style="color: #0000AA;">[SPACE] : LOMPAT</p>
+        </div>
+        <button id="start-btn">MAIN SEKARANG</button>
+    </div>
+
+    <div id="game-over-screen" class="screen" style="display: none;">
+        <h1 style="color: #FF5555; text-shadow: 4px 4px #AA0000;">GAME OVER</h1>
+        <div class="control-info" style="margin-bottom: 20px;">
+            <p>Skor Akhir: <span id="final-score" style="color: #AA0000;">0</span></p>
+        </div>
+        <button id="restart-btn">RESPAWN</button>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const startScreen = document.getElementById('start-screen');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const uiLayer = document.getElementById('ui-layer');
+    const scoreEl = document.getElementById('scoreVal');
+    const levelEl = document.getElementById('levelVal');
+    const finalScoreEl = document.getElementById('final-score');
+
+    let animationId, isGameRunning = false;
+    let score = 0, level = 1, gameSpeed = 5, frameCount = 0;
+    const groundHeight = 100;
+    const groundY = canvas.height - groundHeight;
+
+    let audioCtx;
+    function playBackgroundMusic() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = [329.63, 392.00, 440.00, 523.25]; 
+        let nextNoteTime = audioCtx.currentTime;
+
+        function playNote() {
+            if (!isGameRunning) return;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'triangle'; 
+            osc.frequency.setValueAtTime(notes[Math.floor(Math.random() * notes.length)], nextNoteTime);
+            gain.gain.setValueAtTime(0.02, nextNoteTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, nextNoteTime + 0.8);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(nextNoteTime); osc.stop(nextNoteTime + 0.8);
+            nextNoteTime += 0.8;
+            setTimeout(playNote, 800);
+        }
+        playNote();
+    }
+
+    const keys = { Space: false };
+    window.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') { keys.Space = true; e.preventDefault(); } });
+    window.addEventListener('keyup', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') keys.Space = false; });
+
+    const player = {
+        x: 100, y: 0, width: 36, height: 76, vy: 0,
+        gravity: 0.8, jumpPower: -16, isGrounded: false,
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.fillStyle = '#303f9f'; ctx.fillRect(6, 52, 10, 24); ctx.fillRect(20, 52, 10, 24);
+            ctx.fillStyle = '#4fc3f7'; ctx.fillRect(2, 22, 32, 30);
+            ctx.fillStyle = '#ffccbc'; ctx.fillRect(6, 0, 24, 22);
+            ctx.fillStyle = '#5d4037'; ctx.fillRect(6, 0, 24, 6);
+            ctx.fillStyle = '#212121'; ctx.fillRect(10, 10, 4, 4); ctx.fillRect(22, 10, 4, 4);
+            ctx.restore();
+        },
+        update() {
+            this.vy += this.gravity; this.y += this.vy;
+            if (this.y + this.height >= groundY) { this.y = groundY - this.height; this.vy = 0; this.isGrounded = true; }
+            else this.isGrounded = false;
+            if (keys.Space && this.isGrounded) { this.vy = this.jumpPower; this.isGrounded = false; }
+        }
+    };
+
+    class Obstacle {
+        constructor() {
+            this.width = 40;
+            this.type = ['stone', 'log', 'dirt'][Math.floor(Math.random() * 3)];
+            this.height = Math.random() > 0.7 ? 80 : 40;
+            this.x = canvas.width;
+            this.y = groundY - this.height;
+        }
+        draw() {
+            ctx.lineWidth = 3;
+            if (this.type === 'stone') {
+                ctx.fillStyle = '#90a4ae'; ctx.fillRect(this.x, this.y, 40, this.height);
+                ctx.strokeStyle = '#546e7a'; ctx.strokeRect(this.x, this.y, 40, this.height);
+            } else if (this.type === 'log') {
+                ctx.fillStyle = '#795548'; ctx.fillRect(this.x, this.y, 40, this.height);
+                ctx.strokeStyle = '#4e342e'; ctx.strokeRect(this.x, this.y, 40, this.height);
+            } else {
+                ctx.fillStyle = '#8d6e63'; ctx.fillRect(this.x, this.y, 40, this.height);
+                ctx.fillStyle = '#66bb6a'; ctx.fillRect(this.x, this.y, 40, 10);
+            }
+        }
+        update() { this.x -= gameSpeed; }
+    }
+
+    class Coin {
+        constructor() {
+            this.size = 20; this.x = canvas.width;
+            this.y = groundY - 60 - Math.random() * 150;
+        }
+        draw() {
+            ctx.fillStyle = '#fbc02d'; ctx.beginPath();
+            ctx.arc(this.x + 10, this.y + 10, 12, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#f9a825'; ctx.stroke();
+        }
+        update() { this.x -= gameSpeed; }
+    }
+
+    function drawEnvironment() {
+        let cycle = (frameCount % 6000) / 6000;
+        let skyGradient = ctx.createLinearGradient(0, 0, 0, groundY);
+        if (cycle < 0.5) { 
+            skyGradient.addColorStop(0, '#e3f2fd'); skyGradient.addColorStop(1, '#bbdefb');
+        } else { 
+            skyGradient.addColorStop(0, '#fff9c4'); skyGradient.addColorStop(1, '#ffccbc');
+        }
+        ctx.fillStyle = skyGradient; ctx.fillRect(0, 0, canvas.width, groundY);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        for(let i=0; i<3; i++) {
+            let cx = (200 + i*300 - frameCount*0.4) % (canvas.width + 200);
+            ctx.fillRect(cx - 100, 100 + i*40, 80, 30);
+        }
+
+        ctx.fillStyle = '#6d4c41'; ctx.fillRect(0, groundY, canvas.width, groundHeight);
+        ctx.fillStyle = '#5d4037';
+        for(let i=0; i<canvas.width; i+=100) ctx.fillRect(i, groundY + 30, 60, 10);
+
+        for(let i=0; i<4; i++) {
+            let tx = (100 + i * 250 - frameCount * 1.2) % (canvas.width + 250);
+            drawStylizedTree(tx - 100, groundY);
+        }
+
+        ctx.fillStyle = '#81c784'; ctx.fillRect(0, groundY - 15, canvas.width, 15);
+    }
+
+    function drawStylizedTree(x, y) {
+        ctx.fillStyle = '#5d4037'; ctx.fillRect(x + 15, y - 50, 12, 50);
+        ctx.fillStyle = '#45a049'; ctx.fillRect(x, y - 90, 42, 42); 
+        ctx.fillStyle = '#4caf50'; ctx.fillRect(x + 6, y - 110, 30, 30); 
+    }
+
+    let obstacles = [], coins = [];
+
+    function gameLoop() {
+        if (!isGameRunning) return;
+        frameCount++;
+        drawEnvironment();
+        player.update(); player.draw();
+
+        if (frameCount % 100 === 0) coins.push(new Coin());
+        if (frameCount % (Math.max(100 - level*5, 50)) === 0) obstacles.push(new Obstacle());
+
+        coins.forEach((c, i) => {
+            c.update(); c.draw();
+            if (player.x < c.x + 20 && player.x + player.width > c.x && player.y < c.y + 20 && player.y + player.height > c.y) {
+                score++; coins.splice(i, 1);
+                if (score % 10 === 0) { level++; gameSpeed += 0.5; }
+                scoreEl.innerText = score; levelEl.innerText = level;
+            }
+            if (c.x < -50) coins.splice(i, 1);
+        });
+
+        obstacles.forEach((o, i) => {
+            o.update(); o.draw();
+            if (player.x + 10 < o.x + o.width && player.x + player.width - 10 > o.x && player.y + 10 < o.y + o.height && player.y + player.height > o.y) {
+                gameOver();
+            }
+            if (o.x < -50) obstacles.splice(i, 1);
+        });
+
+        animationId = requestAnimationFrame(gameLoop);
+    }
+
+    function startGame() {
+        score = 0; level = 1; gameSpeed = 5; frameCount = 0;
+        obstacles = []; coins = []; player.y = 0; player.vy = 0;
+        startScreen.style.display = 'none'; gameOverScreen.style.display = 'none';
+        uiLayer.style.display = 'flex'; isGameRunning = true;
+        scoreEl.innerText = '0'; levelEl.innerText = '1';
+        playBackgroundMusic(); gameLoop();
+    }
+
+    function gameOver() {
+        isGameRunning = false;
+        cancelAnimationFrame(animationId);
+        uiLayer.style.display = 'none';
+        gameOverScreen.style.display = 'flex';
+        finalScoreEl.innerText = score;
+    }
+
+    document.getElementById('start-btn').addEventListener('click', startGame);
+    document.getElementById('restart-btn').addEventListener('click', startGame);
+</script>
+</body>
+</html>
