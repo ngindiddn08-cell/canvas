@@ -138,11 +138,13 @@
             touch-action: manipulation; 
         }
 
-        /* --- CSS BARU UNTUK SYSTEM PAUSE --- */
+        /* --- PENYESUAIAN TOMBOL PAUSE UNTUK HP --- */
         #pause-btn {
-            padding: 10px 15px;
+            padding: 12px 18px; /* Sedikit lebih besar agar mudah ditekan jempol */
             font-size: 10px;
-            pointer-events: auto; /* Agar bisa diklik walau di dalam ui-layer */
+            pointer-events: auto;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
     </style>
@@ -151,7 +153,7 @@
 
 <div id="game-container">
     <div id="ui-layer">
-        <div style="display: flex; gap: 15px;">
+        <div style="display: flex; gap: 12px; align-items: center;">
             <div class="stat-box">
                 <div class="icon-coin"></div>
                 <span>KOIN:<span id="scoreVal">0</span></span>
@@ -160,8 +162,8 @@
                 <div class="icon-level"></div>
                 <span>LEVEL:<span id="levelVal">1</span></span>
             </div>
+            <button id="pause-btn">|| PAUSE</button>
         </div>
-        <button id="pause-btn">PAUSE [P]</button>
     </div>
 
     <div id="start-screen" class="screen">
@@ -170,7 +172,7 @@
             <p>🌲 MISI: Kumpulkan Koin!</p>
             <p>Hati-hati dengan rintangan blok.</p>
             <br>
-            <p style="color: #0000AA;">[SPACE] : LOMPAT | [P] : PAUSE</p>
+            <p style="color: #0000AA;">TOMBOL KIRI : PAUSE | TOMBOL KANAN : LOMPAT</p>
         </div>
         <button id="start-btn">MAIN SEKARANG</button>
     </div>
@@ -224,7 +226,6 @@
         let nextNoteTime = audioCtx.currentTime;
 
         function playNote() {
-            // Musik berhenti jika game tidak jalan atau sedang di-pause
             if (!isGameRunning || isPaused) return;
             let osc = audioCtx.createOscillator();
             let gain = audioCtx.createGain();
@@ -276,26 +277,30 @@
 
     // --- KONTROL SISTEM PAUSE ---
     function togglePause() {
-        if (!isGameRunning) return; // Hanya bisa pause jika game sedang aktif berjalan
+        if (!isGameRunning) return; 
 
         if (!isPaused) {
-            // Masuk Mode Pause
             isPaused = true;
             cancelAnimationFrame(animationId);
             pauseScreen.style.display = 'flex';
             jumpBtn.style.display = 'none';
         } else {
-            // Keluar Mode Pause (Resume)
             isPaused = false;
             pauseScreen.style.display = 'none';
             jumpBtn.style.display = 'block';
-            playBackgroundMusic(); // Menghidupkan kembali musik
-            gameLoop(); // Melanjutkan loop animasi
+            playBackgroundMusic(); 
+            gameLoop(); 
         }
     }
 
     pauseBtn.addEventListener('click', togglePause);
     resumeBtn.addEventListener('click', togglePause);
+    
+    // Mencegah zoom/delay saat tombol pause ditekan di HP
+    pauseBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        togglePause();
+    }, { passive: false });
 
     // --- OBJEK PLAYER DENGAN LOGIKA ANIMASI DINAMIS ---
     const player = {
@@ -442,7 +447,7 @@
     let obstacles = [], coins = [];
 
     function gameLoop() {
-        if (!isGameRunning || isPaused) return; // Menghentikan kalkulasi saat dipause
+        if (!isGameRunning || isPaused) return; 
         frameCount++;
         drawEnvironment();
         player.update(); player.draw();
