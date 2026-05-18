@@ -125,6 +125,20 @@
             text-shadow: 2px 2px #fff;
         }
 
+        /* --- KODE CSS TOMBOL LOMPAT BARU --- */
+        #jump-btn {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            z-index: 10;
+            padding: 20px 30px;
+            font-size: 16px;
+            display: none; /* Disembunyikan saat layar awal */
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation; /* Membantu di perangkat sentuh */
+        }
+
     </style>
 </head>
 <body>
@@ -147,7 +161,7 @@
             <p>🌲 MISI: Kumpulkan Koin!</p>
             <p>Hati-hati dengan rintangan blok.</p>
             <br>
-            <p style="color: #0000AA;">[SPACE] : LOMPAT</p>
+            <p style="color: #0000AA;">[SPACE] / KLIK : LOMPAT</p>
         </div>
         <button id="start-btn">MAIN SEKARANG</button>
     </div>
@@ -161,6 +175,8 @@
     </div>
 
     <canvas id="gameCanvas" width="800" height="600"></canvas>
+    
+    <button id="jump-btn">LOMPAT [↑]</button>
 </div>
 
 <script>
@@ -173,6 +189,9 @@
     const scoreEl = document.getElementById('scoreVal');
     const levelEl = document.getElementById('levelVal');
     const finalScoreEl = document.getElementById('final-score');
+    
+    // --- VARIABEL TOMBOL LOMPAT ---
+    const jumpBtn = document.getElementById('jump-btn');
 
     let animationId, isGameRunning = false;
     let score = 0, level = 1, gameSpeed = 5, frameCount = 0;
@@ -202,8 +221,27 @@
     }
 
     const keys = { Space: false };
+    
+    // --- KONTROL KEYBOARD ---
     window.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') { keys.Space = true; e.preventDefault(); } });
     window.addEventListener('keyup', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') keys.Space = false; });
+
+    // --- KONTROL TOMBOL LAYAR (MOUSE & TOUCH) ---
+    function handleJumpPress(e) {
+        e.preventDefault(); 
+        keys.Space = true;
+    }
+    
+    function handleJumpRelease(e) {
+        e.preventDefault();
+        keys.Space = false;
+    }
+
+    jumpBtn.addEventListener('mousedown', handleJumpPress);
+    jumpBtn.addEventListener('mouseup', handleJumpRelease);
+    jumpBtn.addEventListener('mouseleave', handleJumpRelease);
+    jumpBtn.addEventListener('touchstart', handleJumpPress, { passive: false });
+    jumpBtn.addEventListener('touchend', handleJumpRelease, { passive: false });
 
     const player = {
         x: 100, y: 0, width: 36, height: 76, vy: 0,
@@ -333,7 +371,11 @@
         score = 0; level = 1; gameSpeed = 5; frameCount = 0;
         obstacles = []; coins = []; player.y = 0; player.vy = 0;
         startScreen.style.display = 'none'; gameOverScreen.style.display = 'none';
-        uiLayer.style.display = 'flex'; isGameRunning = true;
+        
+        uiLayer.style.display = 'flex'; 
+        jumpBtn.style.display = 'block'; // Menampilkan tombol lompat
+
+        isGameRunning = true;
         scoreEl.innerText = '0'; levelEl.innerText = '1';
         playBackgroundMusic(); gameLoop();
     }
@@ -341,7 +383,10 @@
     function gameOver() {
         isGameRunning = false;
         cancelAnimationFrame(animationId);
+        
         uiLayer.style.display = 'none';
+        jumpBtn.style.display = 'none'; // Menyembunyikan tombol saat game over
+        
         gameOverScreen.style.display = 'flex';
         finalScoreEl.innerText = score;
     }
