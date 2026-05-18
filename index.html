@@ -89,7 +89,6 @@
             justify-content: space-between;
             z-index: 5;
             display: none;
-            pointer-events: none;
         }
 
         .stat-box {
@@ -102,6 +101,7 @@
             box-shadow: inset -4px -4px #555, inset 4px 4px #fff;
             color: #373737;
             font-size: 12px;
+            pointer-events: none;
         }
 
         .icon-coin {
@@ -125,7 +125,6 @@
             text-shadow: 2px 2px #fff;
         }
 
-        /* --- KODE CSS TOMBOL LOMPAT BARU --- */
         #jump-btn {
             position: absolute;
             bottom: 30px;
@@ -133,10 +132,17 @@
             z-index: 10;
             padding: 20px 30px;
             font-size: 16px;
-            display: none; /* Disembunyikan saat layar awal */
+            display: none; 
             user-select: none;
             -webkit-user-select: none;
-            touch-action: manipulation; /* Membantu di perangkat sentuh */
+            touch-action: manipulation; 
+        }
+
+        /* --- CSS BARU UNTUK SYSTEM PAUSE --- */
+        #pause-btn {
+            padding: 10px 15px;
+            font-size: 10px;
+            pointer-events: auto; /* Agar bisa diklik walau di dalam ui-layer */
         }
 
     </style>
@@ -145,14 +151,17 @@
 
 <div id="game-container">
     <div id="ui-layer">
-        <div class="stat-box">
-            <div class="icon-coin"></div>
-            <span>KOIN:<span id="scoreVal">0</span></span>
+        <div style="display: flex; gap: 15px;">
+            <div class="stat-box">
+                <div class="icon-coin"></div>
+                <span>KOIN:<span id="scoreVal">0</span></span>
+            </div>
+            <div class="stat-box">
+                <div class="icon-level"></div>
+                <span>LEVEL:<span id="levelVal">1</span></span>
+            </div>
         </div>
-        <div class="stat-box">
-            <div class="icon-level"></div>
-            <span>LEVEL:<span id="levelVal">1</span></span>
-        </div>
+        <button id="pause-btn">PAUSE [P]</button>
     </div>
 
     <div id="start-screen" class="screen">
@@ -161,9 +170,17 @@
             <p>🌲 MISI: Kumpulkan Koin!</p>
             <p>Hati-hati dengan rintangan blok.</p>
             <br>
-            <p style="color: #0000AA;">[SPACE] / KLIK : LOMPAT</p>
+            <p style="color: #0000AA;">[SPACE] : LOMPAT | [P] : PAUSE</p>
         </div>
         <button id="start-btn">MAIN SEKARANG</button>
+    </div>
+
+    <div id="pause-screen" class="screen" style="display: none;">
+        <h1 style="color: #FFAA00; text-shadow: 4px 4px #AA5500;">GAME PAUSED</h1>
+        <div class="control-info">
+            <p>Permainan sedang dijeda.</p>
+        </div>
+        <button id="resume-btn">LANJUTKAN</button>
     </div>
 
     <div id="game-over-screen" class="screen" style="display: none;">
@@ -184,16 +201,18 @@
     const ctx = canvas.getContext('2d');
 
     const startScreen = document.getElementById('start-screen');
+    const pauseScreen = document.getElementById('pause-screen');
     const gameOverScreen = document.getElementById('game-over-screen');
     const uiLayer = document.getElementById('ui-layer');
     const scoreEl = document.getElementById('scoreVal');
     const levelEl = document.getElementById('levelVal');
     const finalScoreEl = document.getElementById('final-score');
     
-    // --- VARIABEL TOMBOL LOMPAT ---
     const jumpBtn = document.getElementById('jump-btn');
+    const pauseBtn = document.getElementById('pause-btn');
+    const resumeBtn = document.getElementById('resume-btn');
 
-    let animationId, isGameRunning = false;
+    let animationId, isGameRunning = false, isPaused = false;
     let score = 0, level = 1, gameSpeed = 5, frameCount = 0;
     const groundHeight = 100;
     const groundY = canvas.height - groundHeight;
@@ -205,7 +224,8 @@
         let nextNoteTime = audioCtx.currentTime;
 
         function playNote() {
-            if (!isGameRunning) return;
+            // Musik berhenti jika game tidak jalan atau sedang di-pause
+            if (!isGameRunning || isPaused) return;
             let osc = audioCtx.createOscillator();
             let gain = audioCtx.createGain();
             osc.type = 'triangle'; 
@@ -223,13 +243,24 @@
     const keys = { Space: false };
     
     // --- KONTROL KEYBOARD ---
-    window.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') { keys.Space = true; e.preventDefault(); } });
-    window.addEventListener('keyup', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') keys.Space = false; });
+    window.addEventListener('keydown', (e) => { 
+        if (e.code === 'Space' || e.code === 'ArrowUp') { 
+            keys.Space = true; 
+            e.preventDefault(); 
+        } 
+        if (e.code === 'KeyP') {
+            togglePause();
+            e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if (e.code === 'Space' || e.code === 'ArrowUp') keys.Space = false; 
+    });
 
-    // --- KONTROL TOMBOL LAYAR (MOUSE & TOUCH) ---
+    // --- KONTROL TOMBOL LOMPAT ---
     function handleJumpPress(e) {
         e.preventDefault(); 
-        keys.Space = true;
+        if (!isPaused) keys.Space = true;
     }
     
     function handleJumpRelease(e) {
@@ -243,24 +274,97 @@
     jumpBtn.addEventListener('touchstart', handleJumpPress, { passive: false });
     jumpBtn.addEventListener('touchend', handleJumpRelease, { passive: false });
 
+    // --- KONTROL SISTEM PAUSE ---
+    function togglePause() {
+        if (!isGameRunning) return; // Hanya bisa pause jika game sedang aktif berjalan
+
+        if (!isPaused) {
+            // Masuk Mode Pause
+            isPaused = true;
+            cancelAnimationFrame(animationId);
+            pauseScreen.style.display = 'flex';
+            jumpBtn.style.display = 'none';
+        } else {
+            // Keluar Mode Pause (Resume)
+            isPaused = false;
+            pauseScreen.style.display = 'none';
+            jumpBtn.style.display = 'block';
+            playBackgroundMusic(); // Menghidupkan kembali musik
+            gameLoop(); // Melanjutkan loop animasi
+        }
+    }
+
+    pauseBtn.addEventListener('click', togglePause);
+    resumeBtn.addEventListener('click', togglePause);
+
+    // --- OBJEK PLAYER DENGAN LOGIKA ANIMASI DINAMIS ---
     const player = {
         x: 100, y: 0, width: 36, height: 76, vy: 0,
         gravity: 0.8, jumpPower: -16, isGrounded: false,
+        
         draw() {
             ctx.save();
             ctx.translate(this.x, this.y);
-            ctx.fillStyle = '#303f9f'; ctx.fillRect(6, 52, 10, 24); ctx.fillRect(20, 52, 10, 24);
-            ctx.fillStyle = '#4fc3f7'; ctx.fillRect(2, 22, 32, 30);
-            ctx.fillStyle = '#ffccbc'; ctx.fillRect(6, 0, 24, 22);
-            ctx.fillStyle = '#5d4037'; ctx.fillRect(6, 0, 24, 6);
-            ctx.fillStyle = '#212121'; ctx.fillRect(10, 10, 4, 4); ctx.fillRect(22, 10, 4, 4);
+
+            let walkCycle = frameCount * 0.15; 
+            let swingRange = 15;
+            let armSwing = Math.sin(walkCycle) * swingRange;
+            let legSwing = Math.sin(walkCycle) * swingRange;
+            
+            let bodyBob = Math.abs(Math.cos(walkCycle)) * 4;
+
+            if (!this.isGrounded) {
+                armSwing = -20; 
+                legSwing = 15;  
+                bodyBob = 0;
+            }
+
+            ctx.fillStyle = '#1a237e'; 
+            ctx.fillRect(20, 52 + bodyBob - (legSwing > 0 ? 0 : legSwing), 10, 24);
+
+            ctx.fillStyle = '#0288d1';
+            ctx.fillRect(28, 24 + bodyBob + armSwing, 8, 25);
+
+            ctx.fillStyle = '#4fc3f7';
+            ctx.fillRect(2, 22 + bodyBob, 32, 30);
+            
+            ctx.fillStyle = '#ffccbc';
+            ctx.fillRect(12, 22 + bodyBob, 12, 5);
+
+            ctx.save();
+            ctx.translate(0, bodyBob);
+            ctx.fillStyle = '#ffccbc';
+            ctx.fillRect(6, 0, 24, 22);
+            ctx.fillStyle = '#5d4037';
+            ctx.fillRect(6, 0, 24, 6);  
+            ctx.fillRect(24, 6, 6, 10); 
+            ctx.fillRect(6, 16, 24, 6);
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(10, 10, 8, 4); ctx.fillRect(22, 10, 8, 4);
+            ctx.fillStyle = '#3f51b5'; ctx.fillRect(14, 10, 4, 4); ctx.fillRect(22, 10, 4, 4);
+            ctx.restore();
+            
+            ctx.fillStyle = '#303f9f';
+            ctx.fillRect(6, 52 + bodyBob + (legSwing > 0 ? 0 : legSwing), 10, 24);
+            ctx.fillStyle = '#03a9f4';
+            ctx.fillRect(-4, 24 + bodyBob - armSwing, 8, 25);
+
             ctx.restore();
         },
+        
         update() {
-            this.vy += this.gravity; this.y += this.vy;
-            if (this.y + this.height >= groundY) { this.y = groundY - this.height; this.vy = 0; this.isGrounded = true; }
-            else this.isGrounded = false;
-            if (keys.Space && this.isGrounded) { this.vy = this.jumpPower; this.isGrounded = false; }
+            this.vy += this.gravity; 
+            this.y += this.vy;
+            if (this.y + this.height >= groundY) { 
+                this.y = groundY - this.height; 
+                this.vy = 0; 
+                this.isGrounded = true; 
+            } else {
+                this.isGrounded = false;
+            }
+            if (keys.Space && this.isGrounded) { 
+                this.vy = this.jumpPower; 
+                this.isGrounded = false; 
+            }
         }
     };
 
@@ -338,7 +442,7 @@
     let obstacles = [], coins = [];
 
     function gameLoop() {
-        if (!isGameRunning) return;
+        if (!isGameRunning || isPaused) return; // Menghentikan kalkulasi saat dipause
         frameCount++;
         drawEnvironment();
         player.update(); player.draw();
@@ -370,10 +474,14 @@
     function startGame() {
         score = 0; level = 1; gameSpeed = 5; frameCount = 0;
         obstacles = []; coins = []; player.y = 0; player.vy = 0;
-        startScreen.style.display = 'none'; gameOverScreen.style.display = 'none';
+        isPaused = false;
+        
+        startScreen.style.display = 'none'; 
+        gameOverScreen.style.display = 'none';
+        pauseScreen.style.display = 'none';
         
         uiLayer.style.display = 'flex'; 
-        jumpBtn.style.display = 'block'; // Menampilkan tombol lompat
+        jumpBtn.style.display = 'block'; 
 
         isGameRunning = true;
         scoreEl.innerText = '0'; levelEl.innerText = '1';
@@ -385,7 +493,7 @@
         cancelAnimationFrame(animationId);
         
         uiLayer.style.display = 'none';
-        jumpBtn.style.display = 'none'; // Menyembunyikan tombol saat game over
+        jumpBtn.style.display = 'none'; 
         
         gameOverScreen.style.display = 'flex';
         finalScoreEl.innerText = score;
