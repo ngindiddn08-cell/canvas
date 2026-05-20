@@ -1,0 +1,342 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+/* ==========================================================================
+   HALAMAN / LAYOUT DASAR
+   ========================================================================== */
+body {   
+    margin: 0;
+    padding: 0;
+    background-color: #2c3e50;
+    color: #ffffff;
+    font-family: 'Press Start 2P', cursive;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#game-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+    border: 8px solid #3d3d3d;
+    overflow: hidden;
+    background-color: #a5d6a7; 
+}
+
+canvas { 
+    display: block; 
+}
+
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    text-align: center;
+}
+
+.screen h1 {
+    color: #ffffff;
+    font-size: 32px;
+    margin-bottom: 30px;
+    text-shadow: 4px 4px #3d3d3d;
+    letter-spacing: 2px;
+}
+
+/* ==========================================================================
+   MINECRAFT THEME HOME SCREEN REDESIGN 
+   ========================================================================== */
+
+/* Kontainer Utama Judul */
+.minecraft-title-container {
+    position: relative;
+    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+/* Judul Utama dengan Efek Bayangan Balok 3D */
+.mc-title {
+    font-size: 48px !important;
+    font-weight: bold;
+    color: #55FF55 !important; /* Hijau Minecraft Grass */
+    text-shadow: 
+        0px 4px 0px #00AA00,
+        4px 4px 0px #000000,
+        -2px 2px 0px #000000,
+        2px -2px 0px #000000 !important;
+    letter-spacing: 4px;
+    margin: 0;
+    z-index: 2;
+}
+
+.mc-title span {
+    color: #855424; /* Cokelat Tanah/Dirt */
+    text-shadow: 
+        0px 4px 0px #5c3a19,
+        4px 4px 0px #000000;
+}
+
+/* Teks Splash Kuning Mengambang Khas Minecraft */
+.mc-splash {
+    position: absolute;
+    right: 15%;
+    bottom: -15px;
+    color: #FFFF55;
+    font-size: 14px;
+    text-shadow: 2px 2px 0px #555500, 3px 3px 0px #000;
+    transform: rotate(-15deg);
+    animation: mcSplashAnim 0.5s infinite alternate ease-in-out;
+    z-index: 3;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+@keyframes mcSplashAnim {
+    from { transform: rotate(-15deg) scale(1); }
+    to { transform: rotate(-15deg) scale(1.1); }
+}
+
+/* Kotak Informasi Misi Standar */
+.control-info {
+    background: #c6c6c6;
+    color: #373737;
+    padding: 20px;
+    border: 4px solid #000;
+    box-shadow: inset -4px -4px #555, inset 4px 4px #fff;
+    margin-bottom: 30px;
+    font-size: 11px;
+    max-width: 80%;
+}
+
+/* Kotak Informasi Misi Modifikasi (Minecraft GUI Panel) */
+.control-info.mc-border {
+    background: #4c4c4c !important; /* Warna Gelap Gui */
+    border: 4px solid #000000 !important;
+    box-shadow: 
+        inset -4px -4px 0px #262626, 
+        inset 4px 4px 0px #7a7a7a,
+        0px 10px 0px rgba(0,0,0,0.4) !important;
+    color: #E0E0E0 !important;
+    padding: 25px !important;
+    max-width: 75%;
+    line-height: 1.8;
+}
+
+.control-info.mc-border p {
+    margin: 8px 0;
+    text-shadow: 2px 2px 0px #222;
+}
+
+/* Dekorasi Tambahan: Awan Kotak-Kotak (Pixel Clouds) */
+.pixel-cloud {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 
+        12px 0 rgba(255, 255, 255, 0.15), 
+        -12px 0 rgba(255, 255, 255, 0.15), 
+        0 12px rgba(255, 255, 255, 0.15), 
+        0 -12px rgba(255, 255, 255, 0.15);
+}
+
+.cloud-1 {
+    width: 60px; height: 30px;
+    top: -20px; left: 10%;
+    animation: floatCloud 20s infinite linear;
+}
+
+.cloud-2 {
+    width: 90px; height: 20px;
+    bottom: 10px; right: 5%;
+    animation: floatCloud 15s infinite linear reverse;
+}
+
+@keyframes floatCloud {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(30px); }
+    100% { transform: translateX(0); }
+}
+
+/* ==========================================================================
+   TOMBOL-TOMBOL (BUTTONS)
+   ========================================================================== */
+button {
+    padding: 15px 30px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
+    background-color: #c6c6c6;
+    color: #373737;
+    border: 4px solid #000;
+    box-shadow: inset -4px -4px #555, inset 4px 4px #fff;
+    cursor: pointer;
+}
+
+button:hover { 
+    background-color: #dcdcdc; 
+}
+
+button:active { 
+    box-shadow: inset 4px 4px #555, inset -4px -4px #fff; 
+}
+
+/* Tombol Menu Bergaya Akurat Seperti Game Minecraft Asli */
+.mc-btn {
+    background: #9e9e9e !important;
+    color: #E0E0E0 !important;
+    border: 4px solid #000000 !important;
+    box-shadow: 
+        inset -4px -4px 0px #4a4a4a, 
+        inset 4px 4px 0px #dfdfdf,
+        0px 6px 0px rgba(0,0,0,0.5) !important;
+    font-size: 14px !important;
+    transition: all 0.1s ease;
+    text-shadow: 2px 2px 0px #373737;
+    padding: 16px 40px !important;
+}
+
+/* Efek saat Kursor Diarahkan ke Tombol MC */
+.mc-btn:hover {
+    background: #5c842c !important; /* Hijau saat dipilih */
+    color: #FFFFFF !important;
+    box-shadow: 
+        inset -4px -4px 0px #3b551c, 
+        inset 4px 4px 0px #a1ca6c,
+        0px 6px 0px rgba(0,0,0,0.5) !important;
+    text-shadow: 2px 2px 0px #222;
+}
+
+/* Efek saat Tombol MC Diklik */
+.mc-btn:active {
+    transform: translateY(4px);
+    box-shadow: 
+        inset 4px 4px 0px #3b551c, 
+        inset -4px -4px 0px #a1ca6c,
+        0px 2px 0px rgba(0,0,0,0.5) !important;
+}
+
+/* ==========================================================================
+   ANTARMUKA PERMAINAN (GAME UI LABELS & HUD)
+   ========================================================================== */
+#ui-layer {
+    position: absolute;
+    top: 25px;
+    left: 25px;
+    right: 25px;
+    display: flex;
+    justify-content: space-between;
+    z-index: 5;
+    display: none;
+}
+
+.stat-box {
+    background-color: #c6c6c6;
+    border: 4px solid #000;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: inset -4px -4px #555, inset 4px 4px #fff;
+    color: #373737;
+    font-size: 12px;
+    pointer-events: none;
+    min-height: 20px;
+}
+
+.icon-coin {
+    width: 16px;
+    height: 16px;
+    background: #f1c40f;
+    border: 2px solid #b8860b;
+    box-shadow: 2px 2px #000;
+}
+
+.icon-level {
+    width: 16px;
+    height: 16px;
+    background: #2ecc71;
+    border: 2px solid #27ae60;
+    box-shadow: 2px 2px #000;
+    border-radius: 50%; 
+}
+
+/* CSS Bentuk Hati (Retro / Pixelated style) */
+.icon-heart {
+    position: relative;
+    width: 12px;
+    height: 12px;
+    background-color: #ff5555;
+    transform: rotate(-45deg);
+    margin: 0 6px;
+    filter: drop-shadow(2px 2px 0px #000);
+}
+
+.icon-heart::before,
+.icon-heart::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background-color: #ff5555;
+    border-radius: 50%;
+}
+
+.icon-heart::before {
+    top: -6px;
+    left: 0;
+}
+
+.icon-heart::after {
+    top: 0;
+    left: 6px;
+}
+
+#scoreVal, #levelVal {
+    text-shadow: 2px 2px #fff;
+}
+
+#jump-btn {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    z-index: 10;
+    padding: 20px 30px;
+    font-size: 16px;
+    display: none; 
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation; 
+}
+
+#pause-btn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#pause-btn::after {
+    content: '';
+    display: block;
+    width: 16px;
+    height: 18px;
+    border-left: 5px solid #373737;
+    border-right: 5px solid #373737;
+    box-sizing: border-box;
+}

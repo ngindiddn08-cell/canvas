@@ -4,171 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minecraft Run - Steve Edition</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
-        body {   
-            margin: 0;
-            padding: 0;
-            background-color: #2c3e50;
-            color: #ffffff;
-            font-family: 'Press Start 2P', cursive;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        #game-container {
-            position: relative;
-            width: 800px;
-            height: 600px;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
-            border: 8px solid #3d3d3d;
-            overflow: hidden;
-            background-color: #a5d6a7; 
-        }
-
-        canvas { display: block; }
-
-        .screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-            text-align: center;
-        }
-
-        .screen h1 {
-            color: #ffffff;
-            font-size: 32px;
-            margin-bottom: 30px;
-            text-shadow: 4px 4px #3d3d3d;
-            letter-spacing: 2px;
-        }
-
-        .control-info {
-            background: #c6c6c6;
-            color: #373737;
-            padding: 20px;
-            border: 4px solid #000;
-            box-shadow: inset -4px -4px #555, inset 4px 4px #fff;
-            margin-bottom: 30px;
-            font-size: 11px;
-            max-width: 80%;
-        }
-
-        button {
-            padding: 15px 30px;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 12px;
-            background-color: #c6c6c6;
-            color: #373737;
-            border: 4px solid #000;
-            box-shadow: inset -4px -4px #555, inset 4px 4px #fff;
-            cursor: pointer;
-        }
-
-        button:hover { background-color: #dcdcdc; }
-        button:active { box-shadow: inset 4px 4px #555, inset -4px -4px #fff; }
-
-        #ui-layer {
-            position: absolute;
-            top: 25px;
-            left: 25px;
-            right: 25px;
-            display: flex;
-            justify-content: space-between;
-            z-index: 5;
-            display: none;
-        }
-
-        .stat-box {
-            background-color: #c6c6c6;
-            border: 4px solid #000;
-            padding: 10px 15px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            box-shadow: inset -4px -4px #555, inset 4px 4px #fff;
-            color: #373737;
-            font-size: 12px;
-            pointer-events: none;
-        }
-
-        .icon-coin {
-            width: 16px;
-            height: 16px;
-            background: #f1c40f;
-            border: 2px solid #b8860b;
-            box-shadow: 2px 2px #000;
-        }
-
-        .icon-level {
-            width: 16px;
-            height: 16px;
-            background: #2ecc71;
-            border: 2px solid #27ae60;
-            box-shadow: 2px 2px #000;
-            border-radius: 50%; 
-        }
-
-        #scoreVal, #levelVal {
-            text-shadow: 2px 2px #fff;
-        }
-
-        #jump-btn {
-            position: absolute;
-            bottom: 30px;
-            right: 30px;
-            z-index: 10;
-            padding: 20px 30px;
-            font-size: 16px;
-            display: none; 
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: manipulation; 
-        }
-
-        /* --- STYLING BARU UNTUK ICON PAUSE --- */
-        #pause-btn {
-            width: 44px; /* Dibuat kotak */
-            height: 44px;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            pointer-events: auto;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        /* Membuat icon 2 garis vertikal murni dengan CSS */
-        #pause-btn::after {
-            content: '';
-            display: block;
-            width: 16px;
-            height: 18px;
-            border-left: 5px solid #373737;
-            border-right: 5px solid #373737;
-            box-sizing: border-box;
-        }
-
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="game-container">
     <div id="ui-layer">
         <div style="display: flex; gap: 12px; align-items: center;">
+            <div class="stat-box" id="lives-container" style="gap: 4px;"></div>
             <div class="stat-box">
                 <div class="icon-coin"></div>
                 <span>KOIN:<span id="scoreVal">0</span></span>
@@ -184,8 +27,8 @@
     <div id="start-screen" class="screen">
         <h1 style="color: #55FF55; text-shadow: 4px 4px #00AA00;">STEVE RUN</h1>
         <div class="control-info">
-            <p>🌲 MISI: Kumpulkan Koin!</p>
-            <p>Hati-hati dengan rintangan blok.</p>
+            <p>❤ MISI: Bertahan & Kumpulkan Koin!</p>
+            <p>Kamu memiliki 3 Nyawa.</p>
             <br>
             <p style="color: #0000AA;">TOMBOL KIRI : PAUSE | TOMBOL KANAN : LOMPAT</p>
         </div>
@@ -221,8 +64,10 @@
     const pauseScreen = document.getElementById('pause-screen');
     const gameOverScreen = document.getElementById('game-over-screen');
     const uiLayer = document.getElementById('ui-layer');
+    
     const scoreEl = document.getElementById('scoreVal');
     const levelEl = document.getElementById('levelVal');
+    const livesContainer = document.getElementById('lives-container');
     const finalScoreEl = document.getElementById('final-score');
     
     const jumpBtn = document.getElementById('jump-btn');
@@ -230,13 +75,22 @@
     const resumeBtn = document.getElementById('resume-btn');
 
     let animationId, isGameRunning = false, isPaused = false;
-    let score = 0, level = 1, gameSpeed = 5, frameCount = 0;
+    let score = 0, level = 1, lives = 3, gameSpeed = 5, frameCount = 0;
     const groundHeight = 100;
     const groundY = canvas.height - groundHeight;
 
     let audioCtx;
+    
+    // Inisialisasi Audio Context secara aman
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    // Musik Latar Belakang Retro
     function playBackgroundMusic() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        initAudio();
         const notes = [329.63, 392.00, 440.00, 523.25]; 
         let nextNoteTime = audioCtx.currentTime;
 
@@ -256,9 +110,35 @@
         playNote();
     }
 
+    // Efek Suara Benturan / Mengurangi Nyawa (8-Bit Hit Sound)
+    function playHitSound() {
+        initAudio();
+        if (!audioCtx) return;
+
+        let now = audioCtx.currentTime;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+
+        // Menggunakan tipe 'sawtooth' atau 'square' agar terdengar kasar seperti benturan retro
+        osc.type = 'sawtooth';
+        
+        // Frekuensi meluncur turun dengan cepat dari tinggi ke rendah (efek benturan/jatuh)
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(60, now + 0.3);
+
+        // Mengatur volume awal keras lalu hilang dengan cepat
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.3);
+    }
+
     const keys = { Space: false };
     
-    // --- KONTROL KEYBOARD ---
     window.addEventListener('keydown', (e) => { 
         if (e.code === 'Space' || e.code === 'ArrowUp') { 
             keys.Space = true; 
@@ -273,7 +153,6 @@
         if (e.code === 'Space' || e.code === 'ArrowUp') keys.Space = false; 
     });
 
-    // --- KONTROL TOMBOL LOMPAT ---
     function handleJumpPress(e) {
         e.preventDefault(); 
         if (!isPaused) keys.Space = true;
@@ -290,7 +169,6 @@
     jumpBtn.addEventListener('touchstart', handleJumpPress, { passive: false });
     jumpBtn.addEventListener('touchend', handleJumpRelease, { passive: false });
 
-    // --- KONTROL SISTEM PAUSE ---
     function togglePause() {
         if (!isGameRunning) return; 
 
@@ -310,12 +188,19 @@
 
     pauseBtn.addEventListener('click', togglePause);
     resumeBtn.addEventListener('click', togglePause);
-    
-    // Mencegah zoom/delay saat tombol pause ditekan di HP
     pauseBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
         togglePause();
     }, { passive: false });
+
+    function updateLivesUI() {
+        livesContainer.innerHTML = '';
+        for (let i = 0; i < lives; i++) {
+            let heart = document.createElement('div');
+            heart.className = 'icon-heart';
+            livesContainer.appendChild(heart);
+        }
+    }
 
     const player = {
         x: 100, y: 0, width: 36, height: 76, vy: 0,
@@ -329,7 +214,6 @@
             let swingRange = 15;
             let armSwing = Math.sin(walkCycle) * swingRange;
             let legSwing = Math.sin(walkCycle) * swingRange;
-            
             let bodyBob = Math.abs(Math.cos(walkCycle)) * 4;
 
             if (!this.isGrounded) {
@@ -469,29 +353,48 @@
         if (frameCount % 100 === 0) coins.push(new Coin());
         if (frameCount % (Math.max(100 - level*5, 50)) === 0) obstacles.push(new Obstacle());
 
-        coins.forEach((c, i) => {
+        for (let i = coins.length - 1; i >= 0; i--) {
+            let c = coins[i];
             c.update(); c.draw();
             if (player.x < c.x + 20 && player.x + player.width > c.x && player.y < c.y + 20 && player.y + player.height > c.y) {
                 score++; coins.splice(i, 1);
                 if (score % 10 === 0) { level++; gameSpeed += 0.5; }
                 scoreEl.innerText = score; levelEl.innerText = level;
+            } else if (c.x < -50) {
+                coins.splice(i, 1);
             }
-            if (c.x < -50) coins.splice(i, 1);
-        });
+        }
 
-        obstacles.forEach((o, i) => {
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            let o = obstacles[i];
             o.update(); o.draw();
+            
             if (player.x + 10 < o.x + o.width && player.x + player.width - 10 > o.x && player.y + 10 < o.y + o.height && player.y + player.height > o.y) {
-                gameOver();
+                
+                obstacles.splice(i, 1); 
+                lives--;                
+                updateLivesUI();        
+                
+                
+                playHitSound();
+                
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                if (lives <= 0) {
+                    gameOver();
+                }
+
+            } else if (o.x < -50) {
+                obstacles.splice(i, 1);
             }
-            if (o.x < -50) obstacles.splice(i, 1);
-        });
+        }
 
         animationId = requestAnimationFrame(gameLoop);
     }
 
     function startGame() {
-        score = 0; level = 1; gameSpeed = 5; frameCount = 0;
+        score = 0; level = 1; lives = 3; gameSpeed = 4; frameCount = 0;
         obstacles = []; coins = []; player.y = 0; player.vy = 0;
         isPaused = false;
         
@@ -503,7 +406,11 @@
         jumpBtn.style.display = 'block'; 
 
         isGameRunning = true;
-        scoreEl.innerText = '0'; levelEl.innerText = '1';
+        
+        scoreEl.innerText = '0'; 
+        levelEl.innerText = '1';
+        updateLivesUI(); 
+        
         playBackgroundMusic(); gameLoop();
     }
 
